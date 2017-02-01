@@ -189,9 +189,8 @@ public class ContactManagerImpl implements ContactManager{
         if(date == null){
             throw new NullPointerException();
         }
-        Calendar startOfDay = Calendar.getInstance();
         Calendar endOfDay = Calendar.getInstance();
-        startOfDay = SetStartOfDay.setStart(date);
+        Calendar startOfDay = SetStartOfDay.setStart(date);
         endOfDay = SetEndOfDay.setEnd(startOfDay, endOfDay);
         return new ArrayList<>(this.meetingList.subMap(startOfDay, true, endOfDay, false).values());
     }
@@ -296,12 +295,11 @@ public class ContactManagerImpl implements ContactManager{
                     .map(x -> x.getValue())
                     .collect(Collectors.toSet());
         }else {
-            Set<Contact> result = contactList.entrySet()
+            return contactList.entrySet()
                     .stream()
                     .map(x -> x.getValue())
                     .filter(p -> p.getName() == name)
                     .collect(Collectors.toSet());
-            return result;
         }
     }
 

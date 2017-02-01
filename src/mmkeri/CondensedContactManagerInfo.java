@@ -29,7 +29,7 @@ public class CondensedContactManagerInfo {
         try {
             jaxbContext = JAXBContext.newInstance(CondensedContactManagerInfo.class);
         } catch (JAXBException e) {
-            // TODO: how do I want to handle this?
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -53,7 +53,7 @@ public class CondensedContactManagerInfo {
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             return (CondensedContactManagerInfo) jaxbUnmarshaller.unmarshal(reader);
         } catch (JAXBException e) {
-            // TODO: how do I want to handle this?
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -64,7 +64,7 @@ public class CondensedContactManagerInfo {
             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             jaxbMarshaller.marshal(this, writer);
         } catch (JAXBException e) {
-            // TODO: how do I want to handle this?
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

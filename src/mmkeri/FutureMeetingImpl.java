@@ -21,6 +21,5 @@ public class FutureMeetingImpl extends MeetingImpl implements FutureMeeting {
         FutureMeetingImpl other = (FutureMeetingImpl)obj;
         return other.getDate().equals(this.getDate()) && other.getId() == this.getId()
                 && other.getContacts().equals(this.getContacts());
-                //&& other.getNotes().equals(this.getNotes());
     }
 }
