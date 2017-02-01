@@ -273,7 +273,7 @@ public class ContactManagerImpl implements ContactManager{
 
     @Override
     public int addNewContact(String name, String notes) throws IllegalArgumentException, NullPointerException{
-        if(name == "" || notes == ""){
+        if(name.equals("") || notes.equals("")){
             throw new IllegalArgumentException();
         }
         if(name == null || notes == null){
@@ -290,7 +290,7 @@ public class ContactManagerImpl implements ContactManager{
         if(name == null){
             throw new NullPointerException();
         }
-        if(name == ""){
+        if(name.equals("")){
             return contactList.entrySet()
                     .stream()
                     .map(x -> x.getValue())
