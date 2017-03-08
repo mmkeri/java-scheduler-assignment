@@ -1,4 +1,7 @@
-package mmkeri;
+package impl;
+
+import spec.Contact;
+import spec.PastMeeting;
 
 import java.util.Calendar;
 import java.util.Set;
@@ -6,17 +9,15 @@ import java.util.Set;
 /**
  * Created by mmker on 04-Jan-17.
  */
-public class PastMeetingImpl extends MeetingImpl implements PastMeeting{
+public final class PastMeetingImpl extends MeetingImpl implements PastMeeting {
 
     private String meetingNotes = "";
 
     public PastMeetingImpl(int id, Calendar date, Set<Contact> contacts, String notes){
         super(id, date, contacts);
-        if(notes == null) {
-            throw new NullPointerException();
-        }else {
-            this.meetingNotes = notes;
-        }
+        //included to ensure that a null pointer exception is thrown if no argument given for notes
+        notes.length();
+        this.meetingNotes = notes;
     }
 
 
@@ -32,8 +33,9 @@ public class PastMeetingImpl extends MeetingImpl implements PastMeeting{
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof PastMeetingImpl))
+        if(!(obj instanceof PastMeetingImpl)) {
             return false;
+        }
         PastMeetingImpl other = (PastMeetingImpl)obj;
         return other.getDate().equals(this.getDate()) && other.getId() == this.getId()
                 && other.getContacts().equals(this.getContacts())

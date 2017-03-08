@@ -1,4 +1,6 @@
-package mmkeri;
+package impl;
+
+import spec.Contact;
 
 import java.util.Set;
 import java.util.Calendar;

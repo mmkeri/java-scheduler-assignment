@@ -1,5 +1,9 @@
-package mmkeri;
+package test;
 
+import spec.Contact;
+import impl.ContactImpl;
+import impl.MeetingImpl;
+import impl.MockMeetingImpl;
 import org.junit.*;
 import static org.junit.Assert.*;
 import java.util.Calendar;

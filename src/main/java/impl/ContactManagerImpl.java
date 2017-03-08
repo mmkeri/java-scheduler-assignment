@@ -1,23 +1,16 @@
-package mmkeri;
+package impl;
+
+import spec.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Collectors.*;
-import java.util.Collections;
 
-import mmkeri.DistinctByKeyPredicate.*;
-import java.util.Calendar.*;
-import java.util.stream.IntStream;
 
-import static mmkeri.CondensedContactManagerInfo.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-public class ContactManagerImpl implements ContactManager{
+public class ContactManagerImpl implements ContactManager {
 
     private int contactId = 0;
     private int meetingId = 0;
@@ -28,11 +21,14 @@ public class ContactManagerImpl implements ContactManager{
     private final IOProvider ioProvider;
     private static List<ContactManagerImpl> autoFlushManagers = new ArrayList<>();
 
+    /**
+     *
+     */
     public ContactManagerImpl(){
         this(new RealIOProviderImpl(), Calendar.getInstance(), true /*autoFlush*/);
     }
 
-    public ContactManagerImpl(IOProvider ioProvider, Calendar nowCalendar, boolean autoFlush){
+    public ContactManagerImpl(IOProvider ioProvider, Calendar nowCalendar, boolean autoFlush) {
         final long now = nowCalendar.getTimeInMillis();
         this.ioProvider = ioProvider;
 
@@ -59,31 +55,31 @@ public class ContactManagerImpl implements ContactManager{
         if (condensedInfo != null) {
             int maxContactId = Integer.MIN_VALUE,
                     maxMeetingId = Integer.MIN_VALUE;
-            for (ContactInfo contactInfo : condensedInfo.contacts) {
-                Contact contact = new ContactImpl(contactInfo.id, contactInfo.name, contactInfo.notes);
+            for (CondensedContactManagerInfo.ContactInfo contactInfo : condensedInfo.getContacts()) {
+                Contact contact = new ContactImpl(contactInfo.getId(), contactInfo.getName(), contactInfo.getNotes());
                 contactList.put(contact.getId(), contact);
-                maxContactId = Math.max(contactInfo.id, maxContactId);
+                maxContactId = Math.max(contactInfo.getId(), maxContactId);
             }
             maxContactId = Math.max(0, maxContactId);
 
-            for (MeetingInfo meetingInfo : condensedInfo.meetings) {
+            for (CondensedContactManagerInfo.MeetingInfo meetingInfo : condensedInfo.getMeetings()) {
                 Set<Contact> attendees = new HashSet<>();
-                for (Integer id : meetingInfo.contacts) {
+                for (Integer id : meetingInfo.getContacts()) {
                     attendees.add(contactList.get(id));
                 }
                 Calendar meetingTime = Calendar.getInstance();
-                meetingTime.setTimeInMillis(meetingInfo.dateTime);
+                meetingTime.setTimeInMillis(meetingInfo.getDateTime());
 
-                if (meetingInfo.dateTime > now) {
-                    FutureMeeting meeting = new FutureMeetingImpl(meetingInfo.id, meetingTime, attendees);
+                if (meetingInfo.getDateTime() > now) {
+                    FutureMeeting meeting = new FutureMeetingImpl(meetingInfo.getId(), meetingTime, attendees);
                     futureMeetingList.put(meeting.getId(), meeting);
                     meetingList.put(meetingTime, meeting);
                 } else {
-                    PastMeeting meeting = new PastMeetingImpl(meetingInfo.id, meetingTime, attendees, meetingInfo.notes);
+                    PastMeeting meeting = new PastMeetingImpl(meetingInfo.getId(), meetingTime, attendees, meetingInfo.getNotes());
                     pastMeetingList.put(meeting.getId(), meeting);
                     meetingList.put(meetingTime, meeting);
                 }
-                maxMeetingId = Math.max(meetingInfo.id, maxMeetingId);
+                maxMeetingId = Math.max(meetingInfo.getId(), maxMeetingId);
             }
             maxMeetingId = Math.max(0, maxMeetingId);
             this.contactId = maxContactId;
@@ -104,7 +100,9 @@ public class ContactManagerImpl implements ContactManager{
                 for(ContactManagerImpl manager : autoFlushManagers) {
                     try {
                         manager.flush();
-                    } catch (Exception e) { }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         };
@@ -215,14 +213,13 @@ public class ContactManagerImpl implements ContactManager{
 
     @Override
     public int addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) throws IllegalArgumentException, NullPointerException{
-        CheckDateEarlier testDate = new CheckDateEarlier();
         if(text == null){
             throw new NullPointerException();
         }
         if(date == null){
             throw new NullPointerException();
         }
-        if(!testDate.isDateEarlier(date)){
+        if(!CheckDateEarlier.isDateEarlier(date)){
             throw new IllegalArgumentException();
         }
         if(contacts == null){
@@ -272,11 +269,11 @@ public class ContactManagerImpl implements ContactManager{
 
     @Override
     public int addNewContact(String name, String notes) throws IllegalArgumentException, NullPointerException{
-        if(name.equals("") || notes.equals("")){
-            throw new IllegalArgumentException();
-        }
         if(name == null || notes == null){
             throw new NullPointerException();
+        }
+        if(name.equals("") || notes.equals("")){
+            throw new IllegalArgumentException();
         }
         contactId++;
         Contact newContact = new ContactImpl(contactId, name, notes);
@@ -346,13 +343,13 @@ public class ContactManagerImpl implements ContactManager{
     * more condensed version that is easier to then write to an XML file
     */
     private CondensedContactManagerInfo computeCondensedVersion() {
-        List<ContactInfo> contacts = new ArrayList<>();
+        List<CondensedContactManagerInfo.ContactInfo> contacts = new ArrayList<>();
         for (Contact contact : this.contactList.values()) {
-            contacts.add(new ContactInfo(contact));
+            contacts.add(new CondensedContactManagerInfo.ContactInfo(contact));
         }
-        List<MeetingInfo> meetings = new ArrayList<>();
+        List<CondensedContactManagerInfo.MeetingInfo> meetings = new ArrayList<>();
         for (Meeting meeting : this.meetingList.values()) {
-            meetings.add(new MeetingInfo(meeting));
+            meetings.add(new CondensedContactManagerInfo.MeetingInfo(meeting));
         }
         return new CondensedContactManagerInfo(contacts, meetings);
     }

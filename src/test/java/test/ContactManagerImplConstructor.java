@@ -1,5 +1,10 @@
-package mmkeri;
+package test;
 
+import impl.*;
+import spec.Contact;
+import spec.ContactManager;
+import spec.IOProvider;
+import spec.Meeting;
 import org.junit.*;
 import static org.junit.Assert.*;
 

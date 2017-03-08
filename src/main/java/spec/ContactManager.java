@@ -1,4 +1,4 @@
-package mmkeri;
+package spec;
 
 import java.util.Calendar;
 import java.util.List;

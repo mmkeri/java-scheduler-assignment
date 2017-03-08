@@ -1,4 +1,4 @@
-package mmkeri;
+package spec;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

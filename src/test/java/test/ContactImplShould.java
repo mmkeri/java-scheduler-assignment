@@ -1,6 +1,9 @@
-package mmkeri;
+package test;
 
 import static org.junit.Assert.*;
+
+import spec.Contact;
+import impl.ContactImpl;
 import org.junit.*;
 
 /**

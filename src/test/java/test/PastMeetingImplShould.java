@@ -1,5 +1,11 @@
-package mmkeri;
+package test;
 
+import impl.ContactImpl;
+import impl.MeetingImpl;
+import impl.MockMeetingImpl;
+import impl.PastMeetingImpl;
+import spec.Contact;
+import spec.PastMeeting;
 import org.junit.*;
 import java.util.Calendar;
 import java.util.HashSet;

@@ -1,38 +1,46 @@
-package mmkeri;
+package impl;
+
+import spec.Contact;
 
 /**
  * Created by mmker on 03-Jan-17.
  */
-public class ContactImpl implements Contact {
+public final class ContactImpl implements Contact {
     private int contactId = 0;
     private String name = null;
     private String notes = "";
 
-    public ContactImpl(int Id, String name, String notes) throws NullPointerException, IllegalArgumentException{
-        if(Id <= 0){
+    /**
+     *
+     * @param id
+     * @param newName
+     * @param newNotes
+     * @throws NullPointerException
+     * @throws IllegalArgumentException
+     */
+    public ContactImpl(int id, String newName, String newNotes){
+        if(id <= 0){
             throw new IllegalArgumentException();
         }else {
-            this.contactId = Id;
+            this.contactId = id;
         }
-        if (name == null || notes == null) {
-            throw new NullPointerException();
-        }else {
-            this.name = name;
-            this.notes = notes;
-        }
+
+        // call .length() which will result in a null pointer exception if the arguments were null
+        newName.length();
+        newNotes.length();
+
+        this.name = newName;
+        this.notes = newNotes;
     }
 
-    public ContactImpl(int Id, String name)throws NullPointerException, IllegalArgumentException{
-        if(Id <= 0) {
+    public ContactImpl(int id, String newName){
+        if(id <= 0) {
             throw new IllegalArgumentException();
         } else {
-            this.contactId = Id;
+            this.contactId = id;
         }
-        if(name == null){
-            throw new NullPointerException();
-        } else {
-            this.name = name;
-        }
+        newName.length();
+        this.name = newName;
     }
 
     @Override
@@ -77,8 +85,9 @@ public class ContactImpl implements Contact {
      */
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ContactImpl))
+        if (!(obj instanceof ContactImpl)) {
             return false;
+        }
         ContactImpl other = (ContactImpl) obj;
         return other.getId() == this.getId() &&
                 other.getName().equals(this.getName()) &&

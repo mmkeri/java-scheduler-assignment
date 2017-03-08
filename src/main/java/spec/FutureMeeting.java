@@ -1,4 +1,4 @@
-package mmkeri;
+package spec;
 
 /**
  * A meeting to be held in the future

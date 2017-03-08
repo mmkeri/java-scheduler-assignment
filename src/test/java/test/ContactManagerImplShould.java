@@ -1,5 +1,7 @@
-package mmkeri;
+package test;
 
+import impl.*;
+import spec.*;
 import org.junit.*;
 
 import java.util.*;
@@ -667,15 +669,15 @@ public class ContactManagerImplShould {
         testContactManager.flush();
 
         assertEquals("Should open exactly one file for writing",
-                1, testIOProvider.mockWriters.size());
+                1, testIOProvider.getMockWriters().size());
         assertEquals("File opened for writing should be named contacts.txt",
-                "contacts.txt", testIOProvider.mockWriters.get(0).getKey());
+                "contacts.txt", testIOProvider.getMockWriters().get(0).getKey());
         assertTrue("File opened for writing should have been closed by flush method",
-                testIOProvider.mockWriters.get(0).getValue().wasCloseCalled);
+                testIOProvider.getMockWriters().get(0).getValue().wasCloseCalled());
         assertEquals("Should result in the following output for empty contact manager",
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                         "<condensedContactManagerInfo/>\n",
-                testIOProvider.mockWriters.get(0).getValue().toString());
+                testIOProvider.getMockWriters().get(0).getValue().toString());
     }
 
     @Test
@@ -686,11 +688,11 @@ public class ContactManagerImplShould {
         testContactManager.flush();
 
         assertEquals("Should open exactly one file for writing",
-                1, testIOProvider.mockWriters.size());
+                1, testIOProvider.getMockWriters().size());
         assertEquals("File opened for writing should be named contacts.txt",
-                "contacts.txt", testIOProvider.mockWriters.get(0).getKey());
+                "contacts.txt", testIOProvider.getMockWriters().get(0).getKey());
         assertTrue("File opened for writing should have been closed by flush method",
-                testIOProvider.mockWriters.get(0).getValue().wasCloseCalled);
+                testIOProvider.getMockWriters().get(0).getValue().wasCloseCalled());
 
         String expected = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<condensedContactManagerInfo>\n" +
@@ -699,7 +701,7 @@ public class ContactManagerImplShould {
                 "</condensedContactManagerInfo>\n";
         assertEquals("Should result in the following output for two contacts",
                 expected,
-                testIOProvider.mockWriters.get(0).getValue().toString());
+                testIOProvider.getMockWriters().get(0).getValue().toString());
     }
 
     @Test
@@ -713,11 +715,11 @@ public class ContactManagerImplShould {
         testContactManager.flush();
 
         assertEquals("Should open exactly one file for writing",
-                1, testIOProvider.mockWriters.size());
+                1, testIOProvider.getMockWriters().size());
         assertEquals("File opened for writing should be named contacts.txt",
-                "contacts.txt", testIOProvider.mockWriters.get(0).getKey());
+                "contacts.txt", testIOProvider.getMockWriters().get(0).getKey());
         assertTrue("File opened for writing should have been closed by flush method",
-                testIOProvider.mockWriters.get(0).getValue().wasCloseCalled);
+                testIOProvider.getMockWriters().get(0).getValue().wasCloseCalled());
 
         String expected = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<condensedContactManagerInfo>\n" +
@@ -728,7 +730,7 @@ public class ContactManagerImplShould {
                 "</condensedContactManagerInfo>\n";
         assertEquals("Should result in the following output for two contacts",
                 expected,
-                testIOProvider.mockWriters.get(0).getValue().toString());
+                testIOProvider.getMockWriters().get(0).getValue().toString());
     }
 
 

@@ -1,10 +1,12 @@
-package mmkeri;
+package impl;
 
 /**
  * Created by mmker on 12-Jan-17.
  */
 
-        import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+        import spec.Contact;
+        import spec.Meeting;
+        import spec.PastMeeting;
 
         import javax.xml.bind.*;
         import javax.xml.bind.annotation.XmlAttribute;
@@ -14,7 +16,6 @@ package mmkeri;
         import java.io.Reader;
         import java.io.Writer;
         import java.util.ArrayList;
-        import java.util.Calendar;
         import java.util.List;
 
 /**
@@ -22,88 +23,127 @@ package mmkeri;
  * reading / writing to files (and other media)
  */
 @XmlRootElement
-public class CondensedContactManagerInfo {
+public final class CondensedContactManagerInfo {
 
-    static final JAXBContext jaxbContext;
+    static final JAXBContext JAXB_CONTEXT;
     static {
         try {
-            jaxbContext = JAXBContext.newInstance(CondensedContactManagerInfo.class);
+            JAXB_CONTEXT = JAXBContext.newInstance(CondensedContactManagerInfo.class);
         } catch (JAXBException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new InvalidAnnotationsException(e);
         }
     }
 
     @XmlElement
-    List<ContactInfo> contacts;
+    private List<ContactInfo> contacts;
     @XmlElement
-    List<MeetingInfo> meetings;
+    private List<MeetingInfo> meetings;
+
+    public List<ContactInfo> getContacts(){
+        return contacts;
+    }
+
+    public List<MeetingInfo>  getMeetings(){
+        return meetings;
+    }
+
 
     public CondensedContactManagerInfo() {
         this(new ArrayList<>(), new ArrayList<>());
     }
 
-    public CondensedContactManagerInfo(List<ContactInfo> contacts, List<MeetingInfo> meetings) {
-        this.contacts = contacts;
-        this.meetings = meetings;
+    public CondensedContactManagerInfo(List<ContactInfo> newContacts, List<MeetingInfo> newMeetings) {
+        this.contacts = newContacts;
+        this.meetings = newMeetings;
     }
 
     public static CondensedContactManagerInfo unmarshal(Reader reader) {
         try {
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            Unmarshaller jaxbUnmarshaller = JAXB_CONTEXT.createUnmarshaller();
             return (CondensedContactManagerInfo) jaxbUnmarshaller.unmarshal(reader);
         } catch (JAXBException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new ContactManagerDecodeException(e);
         }
     }
 
     public void marshal(Writer writer) throws IOException {
         try {
-            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+            Marshaller jaxbMarshaller = JAXB_CONTEXT.createMarshaller();
             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             jaxbMarshaller.marshal(this, writer);
         } catch (JAXBException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new IOException(e);
         }
     }
 
     @XmlRootElement
     static class ContactInfo {
         @XmlAttribute
-        int id;
+        private int id;
         @XmlAttribute
-        String name;
+        private String name;
         @XmlAttribute
-        String notes;
+        private String notes;
         public ContactInfo(Contact contact) {
             this.id = contact.getId();
             this.name = contact.getName();
             this.notes = contact.getNotes();
         }
         public ContactInfo() { }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getNotes() {
+            return notes;
+        }
     }
 
     @XmlRootElement
     static class MeetingInfo {
         @XmlAttribute
-        int id;
+        private int id;
         @XmlAttribute
-        long dateTime;
+        private long dateTime;
         @XmlAttribute
-        List<Integer> contacts;
+        private List<Integer> contacts;
         @XmlAttribute
-        String notes;
+        private String notes;
         public MeetingInfo(Meeting meeting) {
             this.id = meeting.getId();
             this.dateTime = meeting.getDate().getTimeInMillis();
             this.contacts = new ArrayList<>();
             for (Contact contact : meeting.getContacts()) {
-                contacts.add(contact.getId());
+                getContacts().add(contact.getId());
             }
-            this.notes = (meeting instanceof PastMeeting) ? ((PastMeeting) meeting).getNotes() : "";
+            this.notes = getNotesHelper(meeting);
         }
+
+        static String getNotesHelper(Meeting meeting) {
+            return (meeting instanceof PastMeeting) ? ((PastMeeting) meeting).getNotes() : "";
+        }
+
         public MeetingInfo() { }
+
+        public int getId() {
+            return id;
+        }
+
+        public long getDateTime() {
+            return dateTime;
+        }
+
+        public List<Integer> getContacts() {
+            return contacts;
+        }
+
+        public String getNotes() {
+            return notes;
+        }
     }
 }

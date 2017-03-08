@@ -1,11 +1,13 @@
-package mmkeri;
+package impl;
+
+import spec.IOProvider;
 
 import java.io.*;
 
 /**
  * Created by mmker on 08-Jan-17.
  */
-public class RealIOProviderImpl implements IOProvider {
+public final class RealIOProviderImpl implements IOProvider {
     @Override
     public Reader openReader(String path) throws FileNotFoundException{
         return new FileReader(path);

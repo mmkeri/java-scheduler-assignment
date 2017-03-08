@@ -1,11 +1,13 @@
-package mmkeri;
+package impl;
 
 import java.util.Calendar;
 
 /**
  * Created by mmker on 13-Jan-17.
  */
-public class SetEndOfDay {
+public abstract class SetEndOfDay {
+
+    private SetEndOfDay(){}
 
     /*
     Static method to set the end of a day at midnight of the next day based

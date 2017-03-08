@@ -1,11 +1,13 @@
-package mmkeri;
+package impl;
 
 import java.util.Calendar;
 
 /**
  * Created by mmker on 13-Jan-17.
  */
-public class SetStartOfDay {
+public abstract class SetStartOfDay {
+
+    private SetStartOfDay(){}
 
     /*
     Sets the start of the day as midnight of the day given
