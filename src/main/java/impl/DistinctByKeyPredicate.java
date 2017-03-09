@@ -11,8 +11,9 @@ public class DistinctByKeyPredicate {
 
     /**
      * Predicate created to help sort the list of Meetings by the date
-     * @param keyExtractor
-     * @param <T>
+     * @param keyExtractor a special purpose ValueExtractor implementation that indicates that a query
+     *                     should be run against the key of a map rather than the values
+     * @param <T> sorting function that accepts a generic map object
      * @return
      */
     public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor){

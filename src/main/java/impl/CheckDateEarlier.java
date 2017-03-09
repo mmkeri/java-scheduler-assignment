@@ -9,13 +9,15 @@ public abstract class CheckDateEarlier {
 
     private CheckDateEarlier() {}
 
+    /**
+     * Creates a Calendar that will default to the dat it is created
+     * but start of day is set to Midnight.
+     * Ensures that an "earlier" date will be from the day before
+     * and earlier
+     * @param date as a Calendar object
+     * @return a boolean result
+     */
     public static boolean isDateEarlier(Calendar date) {
-        /**
-        Creates a Calendar that will default to the day it is created
-        but start of day is set to Midnight.
-        Ensures that an "earlier" date will be from the day before
-        and earlier
-         */
 
         Calendar startOfDay = Calendar.getInstance();
         startOfDay.set(Calendar.HOUR_OF_DAY, 0);

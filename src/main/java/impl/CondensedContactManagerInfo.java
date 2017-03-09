@@ -18,6 +18,7 @@ package impl;
         import java.util.ArrayList;
         import java.util.List;
 
+
 /**
  * A compact representation of the contact manager's state, optimised for
  * reading / writing to files (and other media)
@@ -39,24 +40,47 @@ public final class CondensedContactManagerInfo {
     @XmlElement
     private List<MeetingInfo> meetings;
 
+    /**
+     * @return a list of type ContactInfo
+     */
     public List<ContactInfo> getContacts(){
         return contacts;
     }
 
+    /**
+     * @return a list of type MeetingInfo
+     */
     public List<MeetingInfo>  getMeetings(){
         return meetings;
     }
 
-
+    /**
+     * No-argument constructor that initializes the CondensedContactManagerInfo object
+     * with two generic ArrayLists
+     */
     public CondensedContactManagerInfo() {
         this(new ArrayList<>(), new ArrayList<>());
     }
 
+    /**
+     * Constructor method. Accepts a list of Contacts and a list of Meetings and sets them
+     * equal to the contacts and meetings fields of the object respectively
+     * @param newContacts a list of type ContactInfo
+     * @param newMeetings a list of type MeetingInfo
+     */
     public CondensedContactManagerInfo(List<ContactInfo> newContacts, List<MeetingInfo> newMeetings) {
         this.contacts = newContacts;
         this.meetings = newMeetings;
     }
 
+    /**
+     * Creates a new Jaxb un-marshaller using the supplied reader to convert
+     * the XML file used to store the ContactInfo and MeetingInfo from a
+     * previous session of the ContactManager
+     * @param reader an instance of an XML file reader
+     * @return  a CondensedContactManagerInfo object holding the ContactInfo and
+     * MeetingInfo that had been saved previously
+     */
     public static CondensedContactManagerInfo unmarshal(Reader reader) {
         try {
             Unmarshaller jaxbUnmarshaller = JAXB_CONTEXT.createUnmarshaller();
@@ -66,6 +90,14 @@ public final class CondensedContactManagerInfo {
         }
     }
 
+    /**
+     * Creates a new Jaxb Marshaller and then writes the contents of
+     * the ContactInfo and MeetingInfo contained in the current Contact Manger
+     * to an XML file
+     * @param writer an instance of an XML file writer
+     * @throws IOException if a JAXBException occurs while trying to write the
+     * data to file a new IOException is thrown to the calling function
+     */
     public void marshal(Writer writer) throws IOException {
         try {
             Marshaller jaxbMarshaller = JAXB_CONTEXT.createMarshaller();
@@ -76,6 +108,10 @@ public final class CondensedContactManagerInfo {
         }
     }
 
+    /**
+     * A storage object generated from a Contact object in preparation for condensing
+     * and saving to and XML file when the ContactManager is closed
+     */
     @XmlRootElement
     static class ContactInfo {
         @XmlAttribute
@@ -84,26 +120,49 @@ public final class CondensedContactManagerInfo {
         private String name;
         @XmlAttribute
         private String notes;
+
+        /**
+         * Constructor for a new ContactInfo object that takes a single Contact as an argument.
+         * Extracts the contact's contact-id, contact-name and notes and stores them in the object
+         * @param contact a Contact object
+         */
         public ContactInfo(Contact contact) {
             this.id = contact.getId();
             this.name = contact.getName();
             this.notes = contact.getNotes();
         }
+
+        /**
+         * No-argument constructor that will generate a new ContactInfo object with empty fields.
+         */
         public ContactInfo() { }
 
+        /**
+         * @return the id value as an integer of a ContactInfo object.
+         */
         public int getId() {
             return id;
         }
 
+        /**
+         * @return the name value as a string of a ContactInfo object.
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * @return the notes from a ContactInfo object as a string.
+         */
         public String getNotes() {
             return notes;
         }
     }
 
+    /**
+     * A storage object generated from a Meeting object in preparation for condensing
+     * and saving to and XML file when the ContactManager is closed
+     */
     @XmlRootElement
     static class MeetingInfo {
         @XmlAttribute
@@ -114,6 +173,13 @@ public final class CondensedContactManagerInfo {
         private List<Integer> contacts;
         @XmlAttribute
         private String notes;
+
+        /**
+         * Constructor for a new MeetingInfo object that takes a single Meeting as an argument.
+         * Extracts the meeting's meeting-id, date of the meeting, the list of the ID numbers of
+         * the Contacts associated with the meeting and any notes (if present) and stores them in the object
+         * @param meeting a Meeting object
+         */
         public MeetingInfo(Meeting meeting) {
             this.id = meeting.getId();
             this.dateTime = meeting.getDate().getTimeInMillis();
@@ -124,24 +190,46 @@ public final class CondensedContactManagerInfo {
             this.notes = getNotesHelper(meeting);
         }
 
+        /**
+         * If the meeting submitted to the MeetingInfo constructor is a PastMeeting and contains
+         * notes associated with that meeting this method returns a String composed of those notes
+         * If a PastMeeting object is not passed an empty string is returned
+         * @param meeting a Meeting object. Either a Future or Past meeting
+         * @return a String generated from the notes field of a PastMeeting or an empty String
+         */
         static String getNotesHelper(Meeting meeting) {
             return (meeting instanceof PastMeeting) ? ((PastMeeting) meeting).getNotes() : "";
         }
 
+        /**
+         * No-arguments contructor for that initializes all parameters to null
+         */
         public MeetingInfo() { }
 
+        /**
+         * @return the id value of the MeetingInfo object as an integer
+         */
         public int getId() {
             return id;
         }
 
+        /**
+         * @return the date and time of the MeetingInfo object as a long
+         */
         public long getDateTime() {
             return dateTime;
         }
 
+        /**
+         * @return a list of the Contact ID numbers as a list of integers
+         */
         public List<Integer> getContacts() {
             return contacts;
         }
 
+        /**
+         * @return a String representing the notes associated with Meeting Object
+         */
         public String getNotes() {
             return notes;
         }
