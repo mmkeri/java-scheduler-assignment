@@ -27,7 +27,7 @@ public class ContactManagerImpl implements ContactManager {
     public ContactManagerImpl(){
         this(new RealIOProviderImpl(), Calendar.getInstance(), true /*autoFlush*/);
     }
-
+    
     public ContactManagerImpl(IOProvider ioProvider, Calendar nowCalendar, boolean autoFlush) {
         final long now = nowCalendar.getTimeInMillis();
         this.ioProvider = ioProvider;
@@ -243,8 +243,8 @@ public class ContactManagerImpl implements ContactManager {
         if(!pastMeetingList.containsKey(id) && !futureMeetingList.containsKey(id)){
             throw new IllegalArgumentException();
         }
-        Calendar startOfDay = Calendar.getInstance();
-        Calendar endOfDay = Calendar.getInstance();
+        Calendar startOfDay = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        Calendar endOfDay = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         startOfDay = SetStartOfDay.setStart(startOfDay);
         endOfDay = SetEndOfDay.setEnd(startOfDay, endOfDay);
         if(futureMeetingList.containsKey(id)) {
@@ -339,9 +339,11 @@ public class ContactManagerImpl implements ContactManager {
         }
     }
 
-    /*takes the contact and meeting lists and converts the objects within them to a
-    * more condensed version that is easier to then write to an XML file
-    */
+    /**
+     * takes the contact and meeting lists and converts the objects within them to a
+     * more condensed version that is easier to then write to an XML file
+     * @return a CondensedContactManagerInfo object 
+     */
     private CondensedContactManagerInfo computeCondensedVersion() {
         List<CondensedContactManagerInfo.ContactInfo> contacts = new ArrayList<>();
         for (Contact contact : this.contactList.values()) {

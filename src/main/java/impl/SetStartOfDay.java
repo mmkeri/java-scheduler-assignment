@@ -9,9 +9,11 @@ public abstract class SetStartOfDay {
 
     private SetStartOfDay(){}
 
-    /*
-    Sets the start of the day as midnight of the day given
-     then returns that as a Calendar value
+    /**
+     * Sets the start of the day as midnight of the day given
+     * then returns that as a Calendar value
+     * @param startOfDay a Calendar object that was initialized to the current time
+     * @return the startOfDay object whose value has been set to midnight of the current day
      */
 
     public static Calendar setStart(Calendar startOfDay){

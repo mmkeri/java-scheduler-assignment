@@ -35,8 +35,14 @@ public final class CondensedContactManagerInfo {
         }
     }
 
+    /**
+     * a list of ContactInfo objects
+     */
     @XmlElement
     private List<ContactInfo> contacts;
+    /**
+     * a list of MeetingInfo objects
+     */
     @XmlElement
     private List<MeetingInfo> meetings;
 
@@ -114,10 +120,19 @@ public final class CondensedContactManagerInfo {
      */
     @XmlRootElement
     static class ContactInfo {
+        /**
+         * an integer value that is unique to each ContactInfo object
+         */
         @XmlAttribute
         private int id;
+        /**
+         * A String value representing the name of the contact
+         */
         @XmlAttribute
         private String name;
+        /**
+         * A String value the represents any additional information about the contact
+         */
         @XmlAttribute
         private String notes;
 
@@ -165,12 +180,25 @@ public final class CondensedContactManagerInfo {
      */
     @XmlRootElement
     static class MeetingInfo {
+        /**
+         * An integer value that is unique to each MeetingInfo object
+         */
         @XmlAttribute
         private int id;
+        /**
+         * A Calendar object that represents the date of the meeting
+         */
         @XmlAttribute
         private long dateTime;
+        /**
+         * A list of Integers that contains the unique id numbers of the contacts that were at
+         * the meeting
+         */
         @XmlAttribute
         private List<Integer> contacts;
+        /**
+         * A String value representing any additional information about the meeting
+         */
         @XmlAttribute
         private String notes;
 

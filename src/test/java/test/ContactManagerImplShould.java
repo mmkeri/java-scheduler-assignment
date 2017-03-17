@@ -336,7 +336,7 @@ public class ContactManagerImplShould {
     }
 
     @Test
-    public void returnAListOfFutureMeetingsWithNoDuplicatesWhenGetFutureMeetingListIsCalled(){
+    public void returnAListOfFutureMeetingsWithNoDuplicatesWhenGetFutureMeetingListIsCalled() {
         List<Meeting> expected = new LinkedList<>();
         expected.add(testFutureMeeting4);
         expected.add(testFutureMeeting3);
@@ -563,6 +563,29 @@ public class ContactManagerImplShould {
         testContactManager.addFutureMeeting(testSet, testCalendar7);
         List<Meeting> output = testContactManager.getMeetingListOn(testCalendar3);
         assertEquals(expected, output);
+    }
+
+    @Test
+    public void returnAListOfMeetingOnTheDateInQuestionInChronologicalOrder(){
+        List<Meeting> expected = new LinkedList<>();
+        testContactManager.addNewContact("Harry", "Needs a barber");
+        testContactManager.addNewContact("Sally", "Met Harry");
+        testContactManager.addNewContact("Joe", "Just average");
+        expected.add(testFutureMeeting);
+        expected.add(testFutureMeeting5);
+        expected.add(testFutureMeeting6);
+        testContactManager.addFutureMeeting(testSet2, testCalendar6);
+        testContactManager.addFutureMeeting(testSet, testCalendar4);
+        testContactManager.addFutureMeeting(testSet, testCalendar5);
+        testContactManager.addFutureMeeting(testSet, testCalendar5);
+        testContactManager.addFutureMeeting(testSet, testCalendar6);
+        testContactManager.addFutureMeeting(testSet, testCalendar7);
+        testContactManager.addFutureMeeting(testSet2, testCalendar3);
+        List<Meeting> output = testContactManager.getMeetingListOn(testCalendar3);
+
+        assertEquals(testCalendar3, output.get(0).getDate());
+        assertEquals(testCalendar7, output.get(1).getDate());
+        assertEquals(testCalendar6, output.get(2).getDate());
     }
 
     @Test(expected = NullPointerException.class)

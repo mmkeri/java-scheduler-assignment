@@ -7,11 +7,25 @@ import java.util.Calendar;
 import java.util.Set;
 
 public abstract class MeetingImpl implements Meeting {
-
+    /**
+     * unique user Id number as an integer value
+     */
     private int meetingId = 0;
+    /**
+     * date associated with the meeting as a Calendar object
+     */
     private Calendar meetingDate = null;
+    /**
+     * a set of Contact objects representing the different people who will be attending the meeting
+     */
     private Set<Contact> meetingContacts = null;
 
+    /**
+     * Constructor of a Meeting object that accepts an id, date and contacts
+     * @param id integer value representing a unique identifier for the meeting
+     * @param date Calendar item representing the date the meeting will take place
+     * @param contacts a set of Contact objects representing the people who will attending the meeting
+     */
     public MeetingImpl(int id, Calendar date, Set<Contact> contacts){
         if(id <= 0) {
             throw new IllegalArgumentException();
