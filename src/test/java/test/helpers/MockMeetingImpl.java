@@ -1,5 +1,6 @@
-package impl;
+package test.helpers;
 
+import impl.MeetingImpl;
 import spec.Contact;
 
 import java.util.Set;

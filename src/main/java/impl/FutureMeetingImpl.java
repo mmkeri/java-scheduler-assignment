@@ -44,4 +44,9 @@ public final class FutureMeetingImpl extends MeetingImpl implements FutureMeetin
         return other.getDate().equals(this.getDate()) && other.getId() == this.getId()
                 && other.getContacts().equals(this.getContacts());
     }
+
+    @Override
+    public String toString() {
+        return String.format("{%1$s:%2$tc:%3$s}", getId(), getDate(), getContacts());
+    }
 }

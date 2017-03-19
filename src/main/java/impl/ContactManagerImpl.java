@@ -2,88 +2,47 @@ package impl;
 
 import spec.*;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 public class ContactManagerImpl implements ContactManager {
+    private static final List<ContactManagerImpl> autoFlushManagers = new ArrayList<>();
 
-    private int contactId = 0;
-    private int meetingId = 0;
-    private Map<Integer , FutureMeeting> futureMeetingList = new HashMap<>();
-    private Map<Integer, PastMeeting> pastMeetingList = new HashMap<>();
-    private Map<Integer, Contact> contactList = new HashMap<>();
-    private NavigableMap<Calendar, Meeting> meetingList = new TreeMap<>();
+    // Normally, we would provide these as constructor arguments, but according to assignment specifications,
+    // we cannot create overloads that accept these as parameters :(
+    private static IOProvider currentIOProvider = new RealIOProviderImpl();
+    private static CurrentTimeProvider currentTimeProvider = Calendar::getInstance;
+    private static boolean autoFlushEnabled = false;
+
     private final IOProvider ioProvider;
-    private static List<ContactManagerImpl> autoFlushManagers = new ArrayList<>();
+    private final Calendar nowCalendar;
+    private final Map<Integer, Contact> contactList = new HashMap<>();
+    private final Map<Integer , FutureMeeting> futureMeetingList = new HashMap<>();
+    private final Map<Integer, PastMeeting> pastMeetingList = new HashMap<>();
+    private final NavigableMap<Calendar, Meeting> meetingList = new TreeMap<>();
+
+    private int lastCreatedContactId = 0;
+    private int lastCreatedMeetingId = 0;
 
     /**
      *
      */
-    public ContactManagerImpl(){
-        this(new RealIOProviderImpl(), Calendar.getInstance(), true /*autoFlush*/);
-    }
-    
-    public ContactManagerImpl(IOProvider ioProvider, Calendar nowCalendar, boolean autoFlush) {
-        final long now = nowCalendar.getTimeInMillis();
-        this.ioProvider = ioProvider;
+    public ContactManagerImpl() {
+        boolean autoFlush = ContactManagerImpl.autoFlushEnabled;
+        this.nowCalendar = currentTimeProvider.getNow();
+        this.ioProvider = currentIOProvider;
 
         // read from contacts
-        Reader reader = null;
-        CondensedContactManagerInfo condensedInfo = null;
-        try {
-            reader = ioProvider.openReader("contacts.txt");
-            condensedInfo = CondensedContactManagerInfo.unmarshal(reader);
-        } catch (FileNotFoundException fnf) {
-            fnf.printStackTrace();
-            // In case of file not found, default values / empty contact manager is created
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException ioex) {
-                    ioex.printStackTrace();
-                }
-            }
-        }
+        CondensedContactManagerInfo condensedInfo = CondensedContactManagerInfo.unmarshalFromFile(ioProvider, "contacts.txt");
 
+        // suggestion: extract to helper method
         // reconstitute from condensed, if reading from store succeeded
         if (condensedInfo != null) {
-            int maxContactId = Integer.MIN_VALUE,
-                    maxMeetingId = Integer.MIN_VALUE;
-            for (CondensedContactManagerInfo.ContactInfo contactInfo : condensedInfo.getContacts()) {
-                Contact contact = new ContactImpl(contactInfo.getId(), contactInfo.getName(), contactInfo.getNotes());
-                contactList.put(contact.getId(), contact);
-                maxContactId = Math.max(contactInfo.getId(), maxContactId);
-            }
-            maxContactId = Math.max(0, maxContactId);
-
-            for (CondensedContactManagerInfo.MeetingInfo meetingInfo : condensedInfo.getMeetings()) {
-                Set<Contact> attendees = new HashSet<>();
-                for (Integer id : meetingInfo.getContacts()) {
-                    attendees.add(contactList.get(id));
-                }
-                Calendar meetingTime = Calendar.getInstance();
-                meetingTime.setTimeInMillis(meetingInfo.getDateTime());
-
-                if (meetingInfo.getDateTime() > now) {
-                    FutureMeeting meeting = new FutureMeetingImpl(meetingInfo.getId(), meetingTime, attendees);
-                    futureMeetingList.put(meeting.getId(), meeting);
-                    meetingList.put(meetingTime, meeting);
-                } else {
-                    PastMeeting meeting = new PastMeetingImpl(meetingInfo.getId(), meetingTime, attendees, meetingInfo.getNotes());
-                    pastMeetingList.put(meeting.getId(), meeting);
-                    meetingList.put(meetingTime, meeting);
-                }
-                maxMeetingId = Math.max(meetingInfo.getId(), maxMeetingId);
-            }
-            maxMeetingId = Math.max(0, maxMeetingId);
-            this.contactId = maxContactId;
-            this.meetingId = maxMeetingId;
+            this.lastCreatedContactId = initialiseContactsFromCondensedInfo(condensedInfo);
+            this.lastCreatedMeetingId = initialiseMeetingsFromCondensedInfo(condensedInfo);
         }
 
         // manager is constructed correctly. If Autoflush was requested, remember that
@@ -91,6 +50,53 @@ public class ContactManagerImpl implements ContactManager {
             autoFlushManagers.add(this);
         }
     }
+
+    /**
+     * Used during construction, to initialize the contact data structures given the provided condensedInfo
+     * @param condensedInfo the object used for flushing to/from disk
+     * @return the last created contact Id
+     */
+    private int initialiseContactsFromCondensedInfo(CondensedContactManagerInfo condensedInfo) {
+        int maxContactId = Integer.MIN_VALUE;
+        for (CondensedContactManagerInfo.ContactInfo contactInfo : condensedInfo.getContacts()) {
+            Contact contact = new ContactImpl(contactInfo.getId(), contactInfo.getName(), contactInfo.getNotes());
+            contactList.put(contact.getId(), contact);
+            maxContactId = Math.max(contactInfo.getId(), maxContactId);
+        }
+        return Math.max(0, maxContactId);
+    }
+
+    /**
+     * Used during construction, to initialize the meeting data structures given the provided condensedInfo
+     * @param condensedInfo the object used for flushing to/from disk
+     * @return the last created meeting Id
+     */
+    private int initialiseMeetingsFromCondensedInfo(CondensedContactManagerInfo condensedInfo) {
+        final long now = this.nowCalendar.getTimeInMillis();
+        int maxMeetingId = Integer.MIN_VALUE;
+
+        for (CondensedContactManagerInfo.MeetingInfo meetingInfo : condensedInfo.getMeetings()) {
+            Set<Contact> attendees = new HashSet<>();
+            for (Integer id : meetingInfo.getContacts()) {
+                attendees.add(contactList.get(id));
+            }
+            Calendar meetingTime = Calendar.getInstance();
+            meetingTime.setTimeInMillis(meetingInfo.getDateTime());
+
+            if (meetingInfo.getDateTime() > now) {
+                FutureMeeting meeting = new FutureMeetingImpl(meetingInfo.getId(), meetingTime, attendees);
+                futureMeetingList.put(meeting.getId(), meeting);
+                meetingList.put(meetingTime, meeting);
+            } else {
+                PastMeeting meeting = new PastMeetingImpl(meetingInfo.getId(), meetingTime, attendees, meetingInfo.getNotes());
+                pastMeetingList.put(meeting.getId(), meeting);
+                meetingList.put(meetingTime, meeting);
+            }
+            maxMeetingId = Math.max(meetingInfo.getId(), maxMeetingId);
+        }
+        return Math.max(0, maxMeetingId);
+    }
+
 
     /** gets initialised when program starts / class is loaded */
     static {
@@ -114,7 +120,7 @@ public class ContactManagerImpl implements ContactManager {
         if(date == null){
             throw new NullPointerException();
         }
-        if(CheckDateEarlier.isDateEarlier(date)){
+        if(date.before(this.nowCalendar)){
             throw new IllegalArgumentException();
         }
         for(Contact contact : contacts){
@@ -122,11 +128,16 @@ public class ContactManagerImpl implements ContactManager {
                 throw new IllegalArgumentException();
             }
         }
-        meetingId++;
-        FutureMeeting newMeeting = new FutureMeetingImpl(meetingId, date, contacts);
-        futureMeetingList.put(meetingId, newMeeting);
+        // new id is last + 1
+        int newMeetingId = lastCreatedMeetingId + 1;
+
+        FutureMeeting newMeeting = new FutureMeetingImpl(newMeetingId, date, contacts);
+        futureMeetingList.put(newMeetingId, newMeeting);
         meetingList.put(date, newMeeting);
-        return meetingId;
+
+        // now record that we've used this ID
+        lastCreatedMeetingId = newMeetingId;
+        return newMeetingId;
     }
 
     @Override
@@ -172,13 +183,12 @@ public class ContactManagerImpl implements ContactManager {
         if(!contactList.containsValue(contact)){
             throw new IllegalArgumentException();
         }
-        List<Meeting> result = futureMeetingList.entrySet()
-                .stream()
-                .map(x -> x.getValue())
-                .filter(n -> n.getContacts().contains(contact))
-                .filter(DistinctByKeyPredicate.distinctByKey((FutureMeeting p) -> p.getDate()))
-                .sorted(Comparator.comparing((FutureMeeting m) -> m.getDate().getTimeInMillis()))
-                .collect(Collectors.toList());
+        List<Meeting> result = new ArrayList<>();
+        for (Meeting meeting: this.meetingList.tailMap(this.nowCalendar).values()) {
+            if (meeting.getContacts().contains(contact)) {
+                result.add(meeting);
+            }
+        }
         return result;
     }
 
@@ -187,9 +197,17 @@ public class ContactManagerImpl implements ContactManager {
         if(date == null){
             throw new NullPointerException();
         }
+        Calendar startOfDay = Calendar.getInstance();
+        startOfDay.setTimeInMillis(date.getTimeInMillis());
+        startOfDay.set(Calendar.HOUR_OF_DAY, 0);
+        startOfDay.set(Calendar.MINUTE, 00);
+        startOfDay.set(Calendar.SECOND, 0);
+        startOfDay.set(Calendar.MILLISECOND, 0);
+
         Calendar endOfDay = Calendar.getInstance();
-        Calendar startOfDay = SetStartOfDay.setStart(date);
-        endOfDay = SetEndOfDay.setEnd(startOfDay, endOfDay);
+        endOfDay.setTimeInMillis(startOfDay.getTimeInMillis());
+        endOfDay.add(Calendar.DATE, 1);
+
         return new ArrayList<>(this.meetingList.subMap(startOfDay, true, endOfDay, false).values());
     }
 
@@ -201,13 +219,13 @@ public class ContactManagerImpl implements ContactManager {
         if(!contactList.containsValue(contact)){
             throw new IllegalArgumentException();
         }
-        List<PastMeeting> result = pastMeetingList.entrySet()
-                .stream()
-                .map(x -> x.getValue())
-                .filter(n -> n.getContacts().contains(contact))
-                .filter(DistinctByKeyPredicate.distinctByKey((PastMeeting p) -> p.getDate()))
-                .sorted(Comparator.comparing((PastMeeting m) -> m.getDate().getTimeInMillis()))
-                .collect(Collectors.toList());
+
+        List<PastMeeting> result = new ArrayList<>();
+        for (Meeting meeting: this.meetingList.headMap(this.nowCalendar).values()) {
+            if (meeting.getContacts().contains(contact)) {
+                result.add((PastMeeting) meeting);
+            }
+        }
         return result;
     }
 
@@ -219,7 +237,7 @@ public class ContactManagerImpl implements ContactManager {
         if(date == null){
             throw new NullPointerException();
         }
-        if(!CheckDateEarlier.isDateEarlier(date)){
+        if(date.after(this.nowCalendar)){
             throw new IllegalArgumentException();
         }
         if(contacts == null){
@@ -228,11 +246,16 @@ public class ContactManagerImpl implements ContactManager {
         if(contacts.isEmpty()){
             throw new IllegalArgumentException();
         }
-        meetingId++;
-        PastMeeting newMeeting = new PastMeetingImpl(meetingId, date, contacts, text);
-        pastMeetingList.put(meetingId, newMeeting);
+
+        int newMeetingId = lastCreatedMeetingId + 1;
+
+        PastMeeting newMeeting = new PastMeetingImpl(newMeetingId, date, contacts, text);
+        pastMeetingList.put(newMeetingId, newMeeting);
         meetingList.put(date, newMeeting);
-        return meetingId;
+
+        // now record that we've used this ID
+        lastCreatedMeetingId = newMeetingId;
+        return newMeetingId;
     }
 
     @Override
@@ -240,31 +263,19 @@ public class ContactManagerImpl implements ContactManager {
         if(text == null) {
             throw new NullPointerException();
         }
-        if(!pastMeetingList.containsKey(id) && !futureMeetingList.containsKey(id)){
-            throw new IllegalArgumentException();
-        }
-        Calendar startOfDay = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        Calendar endOfDay = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        startOfDay = SetStartOfDay.setStart(startOfDay);
-        endOfDay = SetEndOfDay.setEnd(startOfDay, endOfDay);
         if(futureMeetingList.containsKey(id)) {
-            if (futureMeetingList.get(id).getDate().getTimeInMillis() > endOfDay.getTimeInMillis()) {
-                throw new IllegalStateException();
-            }
-            if (futureMeetingList.get(id).getDate().getTimeInMillis() > startOfDay.getTimeInMillis() &&
-                    futureMeetingList.get(id).getDate().getTimeInMillis() < endOfDay.getTimeInMillis()) {
-                FutureMeeting todaysMeeting = futureMeetingList.remove(id);
-                PastMeeting newPastMeeting = new PastMeetingImpl(todaysMeeting.getId(), todaysMeeting.getDate(), todaysMeeting.getContacts(), text);
-                pastMeetingList.put(id, newPastMeeting);
-                return newPastMeeting;
-            }
-        }else if(pastMeetingList.containsKey(id)){
+            throw new IllegalStateException();
+        } else if(pastMeetingList.containsKey(id)){
             PastMeeting oldMeeting = pastMeetingList.remove(id);
-            PastMeeting newMeeting = new PastMeetingImpl(oldMeeting.getId(), oldMeeting.getDate(), oldMeeting.getContacts()
-            , (oldMeeting.getNotes() + " ; " + text));
+            PastMeeting newMeeting = new PastMeetingImpl(oldMeeting.getId(),
+                    oldMeeting.getDate(),
+                    oldMeeting.getContacts(),
+                    oldMeeting.getNotes() + " ; " + text);
+            pastMeetingList.put(id, newMeeting);
+            meetingList.put(newMeeting.getDate(), newMeeting);
             return newMeeting;
         }
-        return null;
+        throw new IllegalArgumentException();
     }
 
     @Override
@@ -275,10 +286,12 @@ public class ContactManagerImpl implements ContactManager {
         if(name.equals("") || notes.equals("")){
             throw new IllegalArgumentException();
         }
-        contactId++;
-        Contact newContact = new ContactImpl(contactId, name, notes);
-        contactList.put(contactId, newContact);
-        return contactId;
+        int newContactId = lastCreatedContactId + 1;
+        lastCreatedContactId = newContactId;
+
+        Contact newContact = new ContactImpl(newContactId, name, notes);
+        contactList.put(newContactId, newContact);
+        return newContactId;
     }
 
     @Override
@@ -287,15 +300,11 @@ public class ContactManagerImpl implements ContactManager {
             throw new NullPointerException();
         }
         if(name.equals("")){
-            return contactList.entrySet()
-                    .stream()
-                    .map(x -> x.getValue())
-                    .collect(Collectors.toSet());
+            return new HashSet<>(contactList.values());
         }else {
-            return contactList.entrySet()
-                    .stream()
-                    .map(x -> x.getValue())
-                    .filter(p -> p.getName() == name)
+            // Suggestion: we can speed this up to O(1) if we add an index by name
+            return contactList.values().stream()
+                    .filter(p -> p.getName().equals(name))
                     .collect(Collectors.toSet());
         }
     }
@@ -354,5 +363,26 @@ public class ContactManagerImpl implements ContactManager {
             meetings.add(new CondensedContactManagerInfo.MeetingInfo(meeting));
         }
         return new CondensedContactManagerInfo(contacts, meetings);
+    }
+
+    public static boolean getAutoFlushEnabled() {
+        return autoFlushEnabled;
+    }
+    public static void setAutoFlushEnabled(boolean autoFlushEnabled) {
+        ContactManagerImpl.autoFlushEnabled = autoFlushEnabled;
+    }
+
+    public static CurrentTimeProvider getCurrentTimeProvider() {
+        return currentTimeProvider;
+    }
+    public static void setCurrentTimeProvider(CurrentTimeProvider timeProvider) {
+        currentTimeProvider = timeProvider;
+    }
+
+    public static IOProvider getCurrentIOProvider() {
+        return currentIOProvider;
+    }
+    public static void setCurrentIOProvider(IOProvider ioProvider) {
+        currentIOProvider = ioProvider;
     }
 }

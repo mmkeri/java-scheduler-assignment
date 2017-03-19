@@ -10,15 +10,15 @@ public abstract class MeetingImpl implements Meeting {
     /**
      * unique user Id number as an integer value
      */
-    private int meetingId = 0;
+    private final int meetingId;
     /**
      * date associated with the meeting as a Calendar object
      */
-    private Calendar meetingDate = null;
+    private final Calendar meetingDate;
     /**
      * a set of Contact objects representing the different people who will be attending the meeting
      */
-    private Set<Contact> meetingContacts = null;
+    private final Set<Contact> meetingContacts;
 
     /**
      * Constructor of a Meeting object that accepts an id, date and contacts

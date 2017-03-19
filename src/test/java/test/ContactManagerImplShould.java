@@ -3,12 +3,17 @@ package test;
 import impl.*;
 import spec.*;
 import org.junit.*;
+import test.helpers.MockIOProviderImpl;
 
 import java.util.*;
 
 import static org.junit.Assert.*;
 
 public class ContactManagerImplShould {
+    IOProvider originalIOProvider;
+    CurrentTimeProvider originalTimeProvider;
+    boolean originalAutoFlushSetting;
+
     Calendar mockNow;
     Calendar testCalendar = null;
     Calendar testCalendar2 = null;
@@ -48,9 +53,18 @@ public class ContactManagerImplShould {
     MockIOProviderImpl testIOProvider = null;
 
     @Before public void setUp(){
+        originalAutoFlushSetting = ContactManagerImpl.getAutoFlushEnabled();
+        originalIOProvider = ContactManagerImpl.getCurrentIOProvider();
+        originalTimeProvider = ContactManagerImpl.getCurrentTimeProvider();
+
         // for purpose of testing, "now" is always 01 Jan 2017
         mockNow = Calendar.getInstance();
         mockNow.set(2017, Calendar.JANUARY, 1);
+        testIOProvider = new MockIOProviderImpl();
+
+        ContactManagerImpl.setAutoFlushEnabled(false);
+        ContactManagerImpl.setCurrentIOProvider(testIOProvider);
+        ContactManagerImpl.setCurrentTimeProvider(() -> mockNow);
 
         contact1 = new ContactImpl(1, "Harry", "Needs a barber");
         contact2 = new ContactImpl(2, "Sally", "Met Harry");
@@ -69,7 +83,7 @@ public class ContactManagerImplShould {
         testSet2.add(contact1);
         testSet2.add(contact3);
         testCalendar = Calendar.getInstance();
-        testCalendar.set(2017, Calendar.JANUARY, 5, 12, 30);
+        testCalendar.set(2016, Calendar.DECEMBER, 5, 12, 30);
         testCalendar2 = Calendar.getInstance();
         testCalendar2.set(2016, Calendar.FEBRUARY, 2, 13, 45);
         testCalendar3 = Calendar.getInstance();
@@ -84,9 +98,8 @@ public class ContactManagerImplShould {
         testCalendar7.set(2017, Calendar.JUNE, 5, 15, 20);
         testCalendar8 = Calendar.getInstance();
         testCalendar8.setTimeInMillis(1428142200000L);
-        testIOProvider = new MockIOProviderImpl();
-        testContactManager = new ContactManagerImpl(testIOProvider, mockNow, false);
-        testContactManager2 = new ContactManagerImpl(testIOProvider, mockNow, false);
+        testContactManager = new ContactManagerImpl();
+        testContactManager2 = new ContactManagerImpl();
         testPastMeeting = new PastMeetingImpl(1, testCalendar2, testSet, "note");
         testPastMeeting2 = new PastMeetingImpl(2, testCalendar8, testSet, "note");
         testPastMeeting3 = new PastMeetingImpl(3, testCalendar, testSet, "note");
@@ -127,6 +140,10 @@ public class ContactManagerImplShould {
         testFutureMeeting4 = null;
         testFutureMeeting5 = null;
         testFutureMeeting6 = null;
+
+        ContactManagerImpl.setAutoFlushEnabled(originalAutoFlushSetting);
+        ContactManagerImpl.setCurrentIOProvider(originalIOProvider);
+        ContactManagerImpl.setCurrentTimeProvider(originalTimeProvider);
     }
 
     @Test
@@ -567,13 +584,9 @@ public class ContactManagerImplShould {
 
     @Test
     public void returnAListOfMeetingOnTheDateInQuestionInChronologicalOrder(){
-        List<Meeting> expected = new LinkedList<>();
         testContactManager.addNewContact("Harry", "Needs a barber");
         testContactManager.addNewContact("Sally", "Met Harry");
         testContactManager.addNewContact("Joe", "Just average");
-        expected.add(testFutureMeeting);
-        expected.add(testFutureMeeting5);
-        expected.add(testFutureMeeting6);
         testContactManager.addFutureMeeting(testSet2, testCalendar6);
         testContactManager.addFutureMeeting(testSet, testCalendar4);
         testContactManager.addFutureMeeting(testSet, testCalendar5);
@@ -583,9 +596,11 @@ public class ContactManagerImplShould {
         testContactManager.addFutureMeeting(testSet2, testCalendar3);
         List<Meeting> output = testContactManager.getMeetingListOn(testCalendar3);
 
-        assertEquals(testCalendar3, output.get(0).getDate());
-        assertEquals(testCalendar7, output.get(1).getDate());
-        assertEquals(testCalendar6, output.get(2).getDate());
+        List<Meeting> expected = new LinkedList<>();
+        expected.add(testContactManager.getFutureMeeting(7));
+        expected.add(testContactManager.getFutureMeeting(6));
+        expected.add(testContactManager.getFutureMeeting(5));
+        assertEquals(expected, output);
     }
 
     @Test(expected = NullPointerException.class)
@@ -615,33 +630,49 @@ public class ContactManagerImplShould {
 
     @Test
     public void returnAChronologicallySortedListForContactsInGetPastMeetingListFor(){
-        List<PastMeeting> expected = new LinkedList<>();
-        expected.add(testPastMeeting2);
-        expected.add(testPastMeeting3);
         testContactManager.addNewContact("Harry", "Needs a barber");
         testContactManager.addNewContact("Sally", "Met Harry");
         testContactManager.addNewContact("Joe", "Just average");
-        testContactManager.addNewPastMeeting(testSet2, testCalendar, "note");
-        testContactManager.addNewPastMeeting(testSet, testCalendar8, "note");
-        testContactManager.addNewPastMeeting(testSet, testCalendar, "note");
-        testContactManager.addNewPastMeeting(testSet2, testCalendar8, "no note");
+
+        int firstMeeting = testContactManager.addNewPastMeeting(testSet, daysComparedToNow(-1), "note");
+        int secondMeeting = testContactManager.addNewPastMeeting(testSet, daysComparedToNow(-2), "note");
+
+        // also add a meeting with contact 3, just to verify it gets excluded
+        testContactManager.addNewPastMeeting(testContactManager.getContacts(3), daysComparedToNow(-3), "without contact2");
+
+        List<PastMeeting> expected = new LinkedList<>();
+        expected.add(testContactManager.getPastMeeting(secondMeeting));
+        expected.add(testContactManager.getPastMeeting(firstMeeting));
+
         List<PastMeeting> output = testContactManager.getPastMeetingListFor(contact2);
         assertEquals(expected, output);
     }
 
+    private Calendar daysComparedToNow(int numberOfDays) {
+        Calendar date = Calendar.getInstance();
+        date.setTimeInMillis(mockNow.getTimeInMillis() + numberOfDays * (24 * 60 * 60 *1000));
+        return date;
+    }
+
     @Test
     public void returnAListWithoutDuplicatesForGetPastMeetingListFor(){
-        List<PastMeeting> expected = new LinkedList<>();
-        expected.add(testPastMeeting2);
-        expected.add(testPastMeeting3);
         testContactManager.addNewContact("Harry", "Needs a barber");
         testContactManager.addNewContact("Sally", "Met Harry");
         testContactManager.addNewContact("Joe", "Just average");
-        testContactManager.addNewPastMeeting(testSet2, testCalendar, "note");
-        testContactManager.addNewPastMeeting(testSet, testCalendar8, "note");
-        testContactManager.addNewPastMeeting(testSet, testCalendar, "note");
-        testContactManager.addNewPastMeeting(testSet, testCalendar8, "note");
+
+        int firstMeeting = testContactManager.addNewPastMeeting(testSet, daysComparedToNow(-1), "note");
+        int secondMeeting = testContactManager.addNewPastMeeting(testSet, daysComparedToNow(-2), "note");
+
+        // also add a meeting with contact 3, just to verify it gets excluded
+        testContactManager.addNewPastMeeting(testContactManager.getContacts(3), daysComparedToNow(-3), "without contact2");
+
+        List<PastMeeting> expected = new LinkedList<>();
+        expected.add(testContactManager.getPastMeeting(secondMeeting));
+        expected.add(testContactManager.getPastMeeting(firstMeeting));
+
         List<PastMeeting> output = testContactManager.getPastMeetingListFor(contact2);
+        List<PastMeeting> duplicatesRemoved = new ArrayList<>(new TreeSet(output));
+        assertEquals(duplicatesRemoved, output);
     }
 
     @Test(expected = NullPointerException.class)
@@ -663,19 +694,6 @@ public class ContactManagerImplShould {
         testContactManager.addNewContact("Joe", "Just average");
         testContactManager.addFutureMeeting(testSet, testCalendar4);
         testContactManager.addMeetingNotes(1, "A little early");
-    }
-
-    @Test
-    public void returnANewPastMeetingWithTheCorrectFieldsWhenAddMeetingNotesIsCalledOnAnAppropriateMeeting(){
-        Calendar testDate = Calendar.getInstance();
-        testDate.add(Calendar.HOUR_OF_DAY, 1);
-        PastMeeting expected = new PastMeetingImpl(1, testDate, testSet, "New past meeting");
-        testContactManager.addNewContact("Harry", "Needs a barber");
-        testContactManager.addNewContact("Sally", "Met Harry");
-        testContactManager.addNewContact("Joe", "Just average");
-        testContactManager.addFutureMeeting(testSet, testDate);
-        PastMeeting output = testContactManager.addMeetingNotes(1, "New past meeting");
-        assertEquals(expected, output);
     }
 
     @Test

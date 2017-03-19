@@ -13,11 +13,11 @@ import java.util.Set;
 /**
  * A meeting object that represents meetings that have occurred in the past
  */
-public final class PastMeetingImpl extends MeetingImpl implements PastMeeting {
+public final class PastMeetingImpl extends MeetingImpl implements PastMeeting, Comparable<PastMeeting> {
     /**
      * A String that contains any notes or comments about the meeting
      */
-    private String meetingNotes = "";
+    private final String meetingNotes;
 
     /**
      * Initializes a new PastMeeting so that it contains an id value, date, contact and
@@ -50,6 +50,11 @@ public final class PastMeetingImpl extends MeetingImpl implements PastMeeting {
         return this.getDate().hashCode() ^ Integer.hashCode(this.getId());
     }
 
+    @Override
+    public String toString() {
+        return String.format("{%1$s:%2$s:%3$s}", getId(), getContacts(), getNotes());
+    }
+
     /**
      * Tests whether the submitted instance of PastMeetingImpl is equal to that of another.
      * Equality is based whether the objects have equal dates, id numbers, Contact sets and
@@ -66,5 +71,10 @@ public final class PastMeetingImpl extends MeetingImpl implements PastMeeting {
         return other.getDate().equals(this.getDate()) && other.getId() == this.getId()
                 && other.getContacts().equals(this.getContacts())
                 && other.getNotes().equals(this.getNotes());
+    }
+
+    @Override
+    public int compareTo(PastMeeting o) {
+        return this.getDate().compareTo(o.getDate());
     }
 }

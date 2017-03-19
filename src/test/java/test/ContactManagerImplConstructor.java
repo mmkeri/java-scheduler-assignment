@@ -6,6 +6,8 @@ import spec.ContactManager;
 import spec.IOProvider;
 import spec.Meeting;
 import org.junit.*;
+import test.helpers.MockIOProviderImpl;
+
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -15,6 +17,10 @@ import java.util.*;
  * Created by mmker on 08-Jan-17.
  */
 public class ContactManagerImplConstructor {
+    IOProvider originalIOProvider;
+    CurrentTimeProvider originalTimeProvider;
+    boolean originalAutoFlushSetting;
+
     Calendar mockNow;
     MockIOProviderImpl commonTestProvider = null;
     Contact contactHarry = new ContactImpl(1, "Harry", "Needs a barber");
@@ -27,10 +33,20 @@ public class ContactManagerImplConstructor {
 
     @Before
     public void setUp(){
+        originalAutoFlushSetting = ContactManagerImpl.getAutoFlushEnabled();
+        originalIOProvider = ContactManagerImpl.getCurrentIOProvider();
+        originalTimeProvider = ContactManagerImpl.getCurrentTimeProvider();
+
+
         mockNow = Calendar.getInstance();
         // for purpose of testing, "now" is always 01 Jan 2017
         mockNow.set(2017, Calendar.JANUARY, 1);
         commonTestProvider = new MockIOProviderImpl();
+
+        ContactManagerImpl.setAutoFlushEnabled(false);
+        ContactManagerImpl.setCurrentIOProvider(commonTestProvider);
+        ContactManagerImpl.setCurrentTimeProvider(() -> mockNow);
+
         testContacts.add(contactHarry);
         testContacts.add(contactSally);
         testCalendar1.setTimeInMillis(1428142200000L);
@@ -43,6 +59,9 @@ public class ContactManagerImplConstructor {
     public void cleanUp(){
         mockNow = null;
         commonTestProvider = null;
+        ContactManagerImpl.setAutoFlushEnabled(originalAutoFlushSetting);
+        ContactManagerImpl.setCurrentIOProvider(originalIOProvider);
+        ContactManagerImpl.setCurrentTimeProvider(originalTimeProvider);
     }
 
     class SampleTextProvider implements IOProvider {
@@ -84,7 +103,8 @@ public class ContactManagerImplConstructor {
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
             "<condensedContactManagerInfo/>\n");
 
-        ContactManager testContactManager = new ContactManagerImpl(testCaseProvider, mockNow, false);
+        ContactManagerImpl.setCurrentIOProvider(testCaseProvider);
+        ContactManager testContactManager = new ContactManagerImpl();
 
         assertEquals("Must attempt to open a file!",
                 1, testCaseProvider.openCalls.size());
@@ -104,7 +124,9 @@ public class ContactManagerImplConstructor {
                         "    <contacts id=\"2\" name=\"Sally\" notes=\"Met Harry\"/>\n" +
                         "</condensedContactManagerInfo>\n");
 
-        ContactManager testContactManager = new ContactManagerImpl(testCaseProvider, mockNow, false);
+        ContactManagerImpl.setCurrentIOProvider(testCaseProvider);
+
+        ContactManager testContactManager = new ContactManagerImpl();
 
         assertEquals("Must attempt to open a file!",
                 1, testCaseProvider.openCalls.size());
@@ -132,7 +154,8 @@ public class ContactManagerImplConstructor {
                         "    <meetings id=\"2\" dateTime=\"1518600600000\" contacts=\"2 1\" notes=\"\"/>\n" +
                         "</condensedContactManagerInfo>\n");
 
-        ContactManager testContactManager = new ContactManagerImpl(testCaseProvider, mockNow, false);
+        ContactManagerImpl.setCurrentIOProvider(testCaseProvider);
+        ContactManager testContactManager = new ContactManagerImpl();
 
         assertEquals("Must attempt to open a file!",
                 1, testCaseProvider.openCalls.size());

@@ -6,9 +6,9 @@ import spec.Contact;
  * Created by mmker on 03-Jan-17.
  */
 public final class ContactImpl implements Contact {
-    private int contactId = 0;
-    private String name = null;
-    private String notes = "";
+    private final int contactId;
+    private final String name;
+    private String notes;
 
     /**
      * Constructor of a new Contact Object and sets the value of the contactId, name and notes
@@ -20,10 +20,7 @@ public final class ContactImpl implements Contact {
     public ContactImpl(int id, String newName, String newNotes){
         if(id <= 0){
             throw new IllegalArgumentException();
-        }else {
-            this.contactId = id;
         }
-
         // call .length() which will result in a null pointer exception if the arguments were null
         // done this way because the instructions stated that this method needed to throw a Null
         // Pointer Exception but the PMD cited it as redundant. A method call on an empty newName
@@ -31,6 +28,7 @@ public final class ContactImpl implements Contact {
         newName.length();
         newNotes.length();
 
+        this.contactId = id;
         this.name = newName;
         this.notes = newNotes;
     }
@@ -42,13 +40,7 @@ public final class ContactImpl implements Contact {
      * @param newName
      */
     public ContactImpl(int id, String newName){
-        if(id <= 0) {
-            throw new IllegalArgumentException();
-        } else {
-            this.contactId = id;
-        }
-        newName.length();
-        this.name = newName;
+        this(id, newName, "");
     }
 
     /**
@@ -114,5 +106,10 @@ public final class ContactImpl implements Contact {
         return other.getId() == this.getId() &&
                 other.getName().equals(this.getName()) &&
                 other.getNotes().equals(this.getNotes());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("{%1$s:%2$s:%3$s}", this.contactId, this.name, this.notes);
     }
 }

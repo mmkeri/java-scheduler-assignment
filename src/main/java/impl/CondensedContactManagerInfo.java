@@ -5,6 +5,7 @@ package impl;
  */
 
         import spec.Contact;
+        import spec.IOProvider;
         import spec.Meeting;
         import spec.PastMeeting;
 
@@ -12,11 +13,14 @@ package impl;
         import javax.xml.bind.annotation.XmlAttribute;
         import javax.xml.bind.annotation.XmlElement;
         import javax.xml.bind.annotation.XmlRootElement;
+        import java.io.FileNotFoundException;
         import java.io.IOException;
         import java.io.Reader;
         import java.io.Writer;
         import java.util.ArrayList;
         import java.util.List;
+        import java.util.logging.Level;
+        import java.util.logging.Logger;
 
 
 /**
@@ -28,11 +32,13 @@ public final class CondensedContactManagerInfo {
 
     static final JAXBContext JAXB_CONTEXT;
     static {
+        JAXBContext staticContext = null;
         try {
-            JAXB_CONTEXT = JAXBContext.newInstance(CondensedContactManagerInfo.class);
+            staticContext = JAXBContext.newInstance(CondensedContactManagerInfo.class);
         } catch (JAXBException e) {
-            throw new InvalidAnnotationsException(e);
+            Logger.getGlobal().log(Level.SEVERE, "Error while initializing JAXB, this is a student-error in annotation usage.", e);
         }
+        JAXB_CONTEXT = staticContext;
     }
 
     /**
@@ -92,7 +98,28 @@ public final class CondensedContactManagerInfo {
             Unmarshaller jaxbUnmarshaller = JAXB_CONTEXT.createUnmarshaller();
             return (CondensedContactManagerInfo) jaxbUnmarshaller.unmarshal(reader);
         } catch (JAXBException e) {
-            throw new ContactManagerDecodeException(e);
+            Logger.getGlobal().log(Level.SEVERE, "Error while parsing contact manager database", e);
+            return null;
+        }
+    }
+
+    public static CondensedContactManagerInfo unmarshalFromFile(IOProvider ioProvider, String path) {
+        Reader reader = null;
+        try {
+            reader = ioProvider.openReader("contacts.txt");
+            return CondensedContactManagerInfo.unmarshal(reader);
+        } catch (FileNotFoundException fnf) {
+            Logger.getGlobal().log(Level.SEVERE, "Error while trying to open file", fnf);
+            // In case of file not found, default values / empty contact manager is created
+            return null;
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ioex) {
+                    Logger.getGlobal().log(Level.SEVERE, "Error while trying to close file", ioex);
+                }
+            }
         }
     }
 
