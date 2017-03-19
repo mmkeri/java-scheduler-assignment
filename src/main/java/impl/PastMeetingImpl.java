@@ -50,6 +50,10 @@ public final class PastMeetingImpl extends MeetingImpl implements PastMeeting, C
         return this.getDate().hashCode() ^ Integer.hashCode(this.getId());
     }
 
+    /**
+     * Produces a string value based on the objects ID number, Contacts and Notes
+     * @return a String object
+     */
     @Override
     public String toString() {
         return String.format("{%1$s:%2$s:%3$s}", getId(), getContacts(), getNotes());
@@ -73,6 +77,11 @@ public final class PastMeetingImpl extends MeetingImpl implements PastMeeting, C
                 && other.getNotes().equals(this.getNotes());
     }
 
+    /**
+     * A method to compare two instances of a PastMeeting based on the date
+     * @param o, a PastMeeting object
+     * @return integer value
+     */
     @Override
     public int compareTo(PastMeeting o) {
         return this.getDate().compareTo(o.getDate());

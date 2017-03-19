@@ -45,6 +45,10 @@ public final class FutureMeetingImpl extends MeetingImpl implements FutureMeetin
                 && other.getContacts().equals(this.getContacts());
     }
 
+    /**
+     * Produces a string based on the objects ID, Date and Contacts
+     * @return a String
+     */
     @Override
     public String toString() {
         return String.format("{%1$s:%2$tc:%3$s}", getId(), getDate(), getContacts());

@@ -86,9 +86,7 @@ public final class CondensedContactManagerInfo {
     }
 
     /**
-     * Creates a new Jaxb un-marshaller using the supplied reader to convert
-     * the XML file used to store the ContactInfo and MeetingInfo from a
-     * previous session of the ContactManager
+     * Creates a new Jaxb un-marshaller using the supplied reader
      * @param reader an instance of an XML file reader
      * @return  a CondensedContactManagerInfo object holding the ContactInfo and
      * MeetingInfo that had been saved previously
@@ -103,6 +101,13 @@ public final class CondensedContactManagerInfo {
         }
     }
 
+    /**
+     * Uses the provided IO provider to open the XML file used to store the ContactInfo
+     * and MeetingInfo from a previous session of the ContactManager
+     * @param ioProvider
+     * @param path file name in the form of a String
+     * @return A CondensedContactManager containing Contact and Meeting Info
+     */
     public static CondensedContactManagerInfo unmarshalFromFile(IOProvider ioProvider, String path) {
         Reader reader = null;
         try {

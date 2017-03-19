@@ -43,14 +43,27 @@ public abstract class MeetingImpl implements Meeting {
         this.meetingDate = date;
         this.meetingContacts = contacts;
     }
+
+    /**
+     * returns the objects unique ID number
+     * @return integer value
+     */
     public final int getId() {
         return meetingId;
     }
 
+    /**
+     * returns the Calendar object of the Meeting objevt
+     * @return a Calendar object
+     */
     public final Calendar getDate() {
         return meetingDate;
     }
 
+    /**
+     * returns the Contacts associated with the Meeting
+     * @return a set of Contact objects
+     */
     public final Set<Contact> getContacts() {
         return meetingContacts;
     }

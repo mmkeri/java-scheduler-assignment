@@ -108,6 +108,10 @@ public final class ContactImpl implements Contact {
                 other.getNotes().equals(this.getNotes());
     }
 
+    /**
+     * Returns a string composed of the objects contactId, name and notes
+     * @return String
+     */
     @Override
     public String toString() {
         return String.format("{%1$s:%2$s:%3$s}", this.contactId, this.name, this.notes);

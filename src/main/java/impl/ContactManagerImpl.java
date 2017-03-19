@@ -28,7 +28,7 @@ public class ContactManagerImpl implements ContactManager {
     private int lastCreatedMeetingId = 0;
 
     /**
-     *
+     * Constructor method that returns a new instance of a ContactManagerImpl.
      */
     public ContactManagerImpl() {
         boolean autoFlush = ContactManagerImpl.autoFlushEnabled;
@@ -365,23 +365,50 @@ public class ContactManagerImpl implements ContactManager {
         return new CondensedContactManagerInfo(contacts, meetings);
     }
 
+    /**
+     * getter method for AutoFlushEnabled
+     * @return boolean result
+     */
     public static boolean getAutoFlushEnabled() {
         return autoFlushEnabled;
     }
+
+    /**
+     * setter method for AutoFlushEnabled
+     * @param autoFlushEnabled boolean
+     */
     public static void setAutoFlushEnabled(boolean autoFlushEnabled) {
         ContactManagerImpl.autoFlushEnabled = autoFlushEnabled;
     }
 
+    /**
+     * getter method for GetCurrentTimeProvider
+     * @return a CurrentTimeProvider
+     */
     public static CurrentTimeProvider getCurrentTimeProvider() {
         return currentTimeProvider;
     }
+
+    /**
+     * setter for CurrentTimeProvider
+     * @param timeProvider a CurrentTimeProvider object
+     */
     public static void setCurrentTimeProvider(CurrentTimeProvider timeProvider) {
         currentTimeProvider = timeProvider;
     }
 
+    /**
+     * getter for IOProvider
+     * @return a CurrentIOProvider object
+     */
     public static IOProvider getCurrentIOProvider() {
         return currentIOProvider;
     }
+
+    /**
+     * setter for CurrentIOProvider
+     * @param ioProvider a CurrentIOProvider object
+     */
     public static void setCurrentIOProvider(IOProvider ioProvider) {
         currentIOProvider = ioProvider;
     }
