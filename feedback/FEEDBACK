@@ -1,1 +1,53 @@
+Please look at the general comments to see if any apply.
 
+Don't use wildcards in import statements
+
+import java.io.*;
+
+Good set of tests.
+
+Javadoc on private fields/methods is good but not consistent.
+
+If a method
+
+public MeetingImpl(int id, Calendar date, Set<Contact> contacts){
+        if(id <= 0) {
+            throw new IllegalArgumentException();
+        }
+        if(contacts.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+
+throws exceptions it is good practice to include a "throws" clause 
+as it assists with the documentation and usage.
+
+For
+
+  @Override
+    public PastMeeting getPastMeeting(int id) throws IllegalStateException{
+        if(futureMeetingList.containsKey(id)){
+            throw new IllegalStateException();
+        }
+        if(!pastMeetingList.containsKey(id)){
+            return null;
+        } else {
+            return pastMeetingList.get(id);
+        }
+    }
+
+consider using ?: operator.
+
+Applies elsewhere as well. For example,
+
+  @Override
+    public void addNotes(String note) {
+        if (notes.equals("")) {
+            notes = note;
+        }else{
+            notes = notes + " ; " + note;
+        }
+    }
+
+Make the CM impl the persistent aspect.
+
+Good effort. Distinction.
